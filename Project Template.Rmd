@@ -1,0 +1,73 @@
+---
+title: Studying the relationship between environmental conditions and norovirus case
+  count in the Lower Mainland
+output: html_document
+---
+
+# Missing Value Imputation
+## Time series
+
+```{r}
+
+```
+
+
+## MICE
+
+```{r}
+
+```
+
+
+
+
+
+# Data Transformation
+
+```{r}
+
+```
+
+
+
+
+
+# Multi-collinearity
+## Variance Inflation Factor
+
+```{r}
+
+```
+
+
+
+
+
+
+# Model Fitting 
+- TBD on final models; quasi-Poisson, Poisson, Negative Binomial
+
+```{r}
+
+```
+
+
+
+
+# Cross Validation
+
+```{r}
+
+```
+
+
+
+
+
+# Results
+
+
+
+
+# Discussion/Recommendations
+
