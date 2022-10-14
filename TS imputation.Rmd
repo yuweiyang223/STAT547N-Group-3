@@ -1,0 +1,87 @@
+---
+title: "Analysis"
+author: "Yuwei Yang"
+date: "2022-10-14"
+output: pdf_document
+---
+
+```{r}
+library(dplyr)
+library(lubridate)
+```
+
+```{r}
+data<-read.csv("Covariates data.csv")
+glimpse(data)
+data$Date <- ymd(data$Date)
+```
+
+```{r}
+summary(data)
+
+new_data<- data %>%
+  select(-c(X,Date,...1,year, epiweek))
+
+```
+```{r}
+cor(new_data, use = "complete.obs")
+#delete GSPD and use WSPD
+# use SST and Mean_Temp, delete Max and Min Temp
+# use Total_rain, delete Total_precip
+
+data_del <- data %>%
+  select(X, Date, WDIR, WSPD, Salinity,SST, Mean_Temp, Total_Rain)
+```
+
+```{r}
+# Load packages
+library(VIM) # Will use for simple imputation methods
+library(Amelia) # Will use to impute missing values using EMB
+library(mice) # Will use to impute missing values using MCMC
+```
+
+```{r}
+aggrP <- aggr(data, numbers=TRUE, sortVars=TRUE)
+
+```
+
+```{r}
+library(ggplot2)
+data_1 <- data %>% filter("2005-01-01"< Date)
+ggplot(data_1,aes(x=Date, y=SST))+geom_point()#+geom_smooth(se=F,method="loess", formula=y~x)
+```
+```{r}
+library(imputeTS)
+```
+
+```{r}
+ggplot_na_distribution(data$Mean_Temp)
+```
+
+```{r}
+imp <-na_kalman(data_ts) 
+
+ggplot_na_imputations(data_ts, imp)
+```
+
+
+```{r}
+WDIR<- na_kalman(data_del$WDIR)
+WSPD<- na_kalman(data_del$WSPD)
+Salinity<- na_kalman(data_del$Salinity)
+SST<- na_kalman(data_del$SST)
+Mean_Temp<- na_kalman(data_del$Mean_Temp)
+Total_Rain<- na_kalman(data_del$Total_Rain)
+```
+
+```{r}
+data_TS <- data.frame(data$X,data$Date, WDIR, WSPD,Salinity, SST, Mean_Temp, Total_Rain)
+write.csv(data_TS, "Data TS.csv")
+```
+
+
+
+```{r}
+summary(data_TS)
+```
+
