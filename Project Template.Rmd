@@ -4,6 +4,24 @@ title: Studying the relationship between environmental conditions and norovirus 
 output: html_document
 ---
 
+```{r}
+library(tidyverse)
+library(mice) # Will use to impute missing values using MCMC
+library(VIM) # Will use for simple imputation methods
+library(Amelia) # Will use to impute missing values using EMB
+cov_data <- read.csv("Covariates data.csv")
+glimpse(cov_data)
+
+aggrC <- aggr(cov_data, numbers=TRUE, sortVars=TRUE)
+```
+
+
+# Data Processing
+```{r}
+
+```
+
+
 # Missing Value Imputation
 ## Time series
 
