@@ -5,14 +5,58 @@ output: html_document
 ---
 
 ```{r}
-library(tidyverse)
-library(mice) # Will use to impute missing values using MCMC
-library(VIM) # Will use for simple imputation methods
-library(Amelia) # Will use to impute missing values using EMB
+# load library
+library(tidyverse) 
+library(mice) 
+library(VIM) 
+library(Amelia) 
+library(car) 
+
+# load data
 cov_data <- read.csv("Covariates data.csv")
+noro_count <- read.csv("Norovirus_data.csv")
 glimpse(cov_data)
 
-aggrC <- aggr(cov_data, numbers=TRUE, sortVars=TRUE)
+# clean noro_count data
+colnames(noro_count) <- c("year", "epiweek", "outbreak_count")
+
+# join tables
+df <- cov_data %>%
+  left_join(noro_count, by= c("year", "epiweek"))
+
+# vif
+model_vif <- lm(outbreak_count ~ WDIR + WSPD + GSPD + Salinity + SST + Total_Rain + Max_Temp + Min_Temp + Mean_Temp + Total_Precip, data = df)
+vif_values <- vif(model_vif)
+vif_values
+
+#create horizontal bar chart to display each VIF value
+barplot(vif_values, main = "VIF Values", horiz = TRUE, col = "steelblue")
+
+
+# compared with correlation plot
+## delete GSPD and use WSPD
+## SST and mean temp instead of max, min, max temp
+## Total rain instead of total snow
+
+
+# impute using mice
+set.seed(123)
+noro_mi <- mice(df[,c("WDIR", "GSPD", "Salinity", "SST", "Total_Rain", "Mean_Temp", "outbreak_count")], m=5, seed=123)
+
+
+# imputed data
+noro_mi1 <- complete(noro_mi, 1)
+noro_mi2 <- complete(noro_mi, 2)
+noro_mi3 <- complete(noro_mi, 3)
+noro_mi4 <- complete(noro_mi, 4)
+noro_mi5 <- complete(noro_mi, 5)
+
+# export as csv file
+write.csv(noro_mi1, "data_mi1.csv")
+write.csv(noro_mi2, "data_mi2.csv")
+write.csv(noro_mi3, "data_mi3.csv")
+write.csv(noro_mi4, "data_mi4.csv")
+write.csv(noro_mi5, "data_mi5.csv")
 ```
 
 
