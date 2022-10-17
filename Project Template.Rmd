@@ -51,12 +51,28 @@ noro_mi3 <- complete(noro_mi, 3)
 noro_mi4 <- complete(noro_mi, 4)
 noro_mi5 <- complete(noro_mi, 5)
 
+# bind into complete dataframe
+no_mi_cov <- df[,c("X", "...1", "Date", "Max_Temp", "Min_Temp", "Total_Precip", "year", "epiweek")]
+noro_mi1_df <- cbind(noro_mi1, no_mi_cov)
+noro_mi2_df <- cbind(noro_mi2, no_mi_cov)
+noro_mi3_df <- cbind(noro_mi3, no_mi_cov)
+noro_mi4_df <- cbind(noro_mi4, no_mi_cov)
+noro_mi5_df <- cbind(noro_mi5, no_mi_cov)
+
+
+
 # export as csv file
 write.csv(noro_mi1, "data_mi1.csv")
 write.csv(noro_mi2, "data_mi2.csv")
 write.csv(noro_mi3, "data_mi3.csv")
 write.csv(noro_mi4, "data_mi4.csv")
 write.csv(noro_mi5, "data_mi5.csv")
+
+write.csv(noro_mi1_df, "noro_mi1_df.csv")
+write.csv(noro_mi2_df, "noro_mi2_df.csv")
+write.csv(noro_mi3_df, "noro_mi3_df.csv")
+write.csv(noro_mi4_df, "noro_mi4_df.csv")
+write.csv(noro_mi5_df, "noro_mi5_df.csv")
 ```
 
 
