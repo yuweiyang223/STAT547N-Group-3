@@ -55,7 +55,23 @@ write.csv(data_env, "data_env.csv")
 
 getwd()
 data_noro <- read_csv("Norovirus_data.csv")
-data
+
+
+###########Complete data
+data_complete <- subset(data_env2, select = c(WDIR, WSPD, Salinity, SST, Mean_Temp, Total_Rain, year, epiweek))
+
+data_complete <- data_complete %>% 
+  left_join(data_noro, by = c("year", "epiweek"))
+
+
+data_complete$WDIR <- as.factor(ifelse(data_complete$WDIR < 45, "N",
+                                 ifelse(data_complete$WDIR < 135, "E",
+                                        ifelse(data_complete$WDIR < 225, "S",
+                                               ifelse(data_complete$WDIR < 315, "W", "N")))))
+
+data_complete <- na.omit(data_complete)
+
+write.csv(data_complete, "Data_Complete.csv")  
 
 
 
@@ -68,6 +84,76 @@ data
 
 
 
+######## Time Series Imputed Data
+Data_TS$year <- format(as.Date(Data_TS$data.Date, format="%Y/%m/%d"),"%Y")
+
+Data_TS$epiweek <- epiweek(Data_TS$data.Date)
+
+Data_TS <- rename(Data_TS, Date = "data.Date")
+
+Data_TS <- subset(Data_TS, select = c(WDIR, WSPD, Salinity, SST, Mean_Temp, Total_Rain, year, epiweek))
+
+Data_TS <- Data_TS %>% 
+  group_by(year, epiweek) %>%
+  summarise(WDIR = round(median(WDIR), 2), 
+            WSPD = round(mean(WSPD), 2), 
+            Salinity = round(mean(Salinity), 2), 
+            SST = round(mean(SST), 2), 
+            Total_Rain = round(mean(Total_Rain), 2), 
+            Mean_Temp = round(mean(Mean_Temp), 2))
+
+data_noro <- rename(data_noro, year = "Epiyear")
+data_noro <- rename(data_noro, epiweek = "Epiweek")
+
+data_noro$year <- as.character(data_noro$year)
+
+Data_TS <- Data_TS %>% 
+  left_join(data_noro, by = c("year", "epiweek"))
+
+write.csv(Data_TS, "Data_TS")  
+
+Data_TS$WDIR <- as.factor(ifelse(Data_TS$WDIR < 45, "N",
+                                              ifelse(Data_TS$WDIR < 135, "E",
+                                              ifelse(Data_TS$WDIR < 225, "S",
+                                              ifelse(Data_TS$WDIR < 315, "W", "N")))))
+
+
+write.csv(Data_TS, "Data_TS.csv")  
+
+
+
+#### MI Data sets
+
+Data_TS <- rename(Data_TS, Date = "data.Date")
+
+Data_TS <- subset(Data_TS, select = c(WDIR, WSPD, Salinity, SST, Mean_Temp, Total_Rain, year, epiweek))
+
+Data_TS <- Data_TS %>% 
+  group_by(year, epiweek) %>%
+  summarise(WDIR = round(median(WDIR), 2), 
+            WSPD = round(mean(WSPD), 2), 
+            Salinity = round(mean(Salinity), 2), 
+            SST = round(mean(SST), 2), 
+            Total_Rain = round(mean(Total_Rain), 2), 
+            Mean_Temp = round(mean(Mean_Temp), 2))
+
+data_noro <- rename(data_noro, year = "Epiyear")
+data_noro <- rename(data_noro, epiweek = "Epiweek")
+
+data_noro$year <- as.character(data_noro$year)
+
+Data_TS <- Data_TS %>% 
+  left_join(data_noro, by = c("year", "epiweek"))
+
+write.csv(Data_TS, "Data_TS")  
+
+Data_TS$WDIR <- as.factor(ifelse(Data_TS$WDIR < 45, "N",
+                                 ifelse(Data_TS$WDIR < 135, "E",
+                                        ifelse(Data_TS$WDIR < 225, "S",
+                                               ifelse(Data_TS$WDIR < 315, "W", "N")))))
+
+
+write.csv(Data_TS, "Data_TS.csv")  
 
 
 
