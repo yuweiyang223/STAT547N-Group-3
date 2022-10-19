@@ -124,36 +124,28 @@ write.csv(Data_TS, "Data_TS.csv")
 
 #### MI Data sets
 
-Data_TS <- rename(Data_TS, Date = "data.Date")
+noro_mi5_df <- subset(noro_mi5_df, select = c(WDIR, GSPD, Salinity, SST, Mean_Temp, Total_Rain, year, epiweek))
 
-Data_TS <- subset(Data_TS, select = c(WDIR, WSPD, Salinity, SST, Mean_Temp, Total_Rain, year, epiweek))
-
-Data_TS <- Data_TS %>% 
+noro_mi5_df <- noro_mi5_df %>% 
   group_by(year, epiweek) %>%
   summarise(WDIR = round(median(WDIR), 2), 
-            WSPD = round(mean(WSPD), 2), 
+            GSPD = round(mean(GSPD), 2), 
             Salinity = round(mean(Salinity), 2), 
             SST = round(mean(SST), 2), 
             Total_Rain = round(mean(Total_Rain), 2), 
             Mean_Temp = round(mean(Mean_Temp), 2))
 
-data_noro <- rename(data_noro, year = "Epiyear")
-data_noro <- rename(data_noro, epiweek = "Epiweek")
+noro_mi5_df$year <- as.character(noro_mi5_df$year)
 
-data_noro$year <- as.character(data_noro$year)
-
-Data_TS <- Data_TS %>% 
+noro_mi5_df <- noro_mi5_df %>% 
   left_join(data_noro, by = c("year", "epiweek"))
 
-write.csv(Data_TS, "Data_TS")  
+noro_mi5_df$WDIR <- as.factor(ifelse(noro_mi5_df$WDIR < 45, "N",
+                                 ifelse(noro_mi5_df$WDIR < 135, "E",
+                                        ifelse(noro_mi5_df$WDIR < 225, "S",
+                                               ifelse(noro_mi5_df$WDIR < 315, "W", "N")))))
 
-Data_TS$WDIR <- as.factor(ifelse(Data_TS$WDIR < 45, "N",
-                                 ifelse(Data_TS$WDIR < 135, "E",
-                                        ifelse(Data_TS$WDIR < 225, "S",
-                                               ifelse(Data_TS$WDIR < 315, "W", "N")))))
-
-
-write.csv(Data_TS, "Data_TS.csv")  
+write.csv(noro_mi5_df, "noro_mi5.csv")  
 
 
 
