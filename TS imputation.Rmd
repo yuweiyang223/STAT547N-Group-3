@@ -29,8 +29,12 @@ cor(new_data, use = "complete.obs")
 # use SST and Mean_Temp, delete Max and Min Temp
 # use Total_rain, delete Total_precip
 
+library(corrplot)
+corrplot(cor(new_data, use = "complete.obs"))
+
 data_del <- data %>%
   select(X, Date, WDIR, WSPD, Salinity,SST, Mean_Temp, Total_Rain)
+
 ```
 
 ```{r}
@@ -41,7 +45,7 @@ library(mice) # Will use to impute missing values using MCMC
 ```
 
 ```{r}
-aggrP <- aggr(data, numbers=TRUE, sortVars=TRUE)
+aggrP <- aggr(data_del, numbers=TRUE, sortVars=TRUE)
 
 ```
 
@@ -59,9 +63,11 @@ ggplot_na_distribution(data$Mean_Temp)
 ```
 
 ```{r}
+data_ts <- data$Mean_Temp
 imp <-na_kalman(data_ts) 
 
-ggplot_na_imputations(data_ts, imp)
+ggplot_na_imputations(data_ts, imp,  size_points = 1.5,
+  size_imputations = 2, ylab = "Mean Temperature", subtitle = "Visualization of missing value replacements")
 ```
 
 
@@ -72,6 +78,7 @@ Salinity<- na_kalman(data_del$Salinity)
 SST<- na_kalman(data_del$SST)
 Mean_Temp<- na_kalman(data_del$Mean_Temp)
 Total_Rain<- na_kalman(data_del$Total_Rain)
+
 ```
 
 ```{r}
@@ -83,5 +90,20 @@ write.csv(data_TS, "Data TS.csv")
 
 ```{r}
 summary(data_TS)
+```
+```{r}
+data_ts <- data$Total_Rain
+imp <-na_kalman(data_ts) 
+
+ggplot_na_imputations(data_ts, imp,  size_points = 1.5,
+  size_imputations = 2, ylab = "Mean Temperature", subtitle = "Visualization of missing value replacements")
+```
+
+```{r}
+data_ts <- data$SST
+imp <-na_kalman(data_ts, maxgap=100) 
+
+ggplot_na_imputations(data_ts, imp,  size_points = 1.5,
+  size_imputations = 1, ylab = "Mean Temperature", subtitle = "Visualization of missing value replacements")
 ```
 
