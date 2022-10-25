@@ -109,21 +109,20 @@ ggplot_na_imputations(full_dat$SST, noro_mi1$SST, ylab = "SST", title = "", lege
 
 ```{r}
 set.seed(123)
-
 # randomly sample 10% of available data for each variable
-rm_wdir <- round((dim(df)[1] - sum(is.na(agr_cov$WDIR)))*0.1)
-rm_wspd <- round((dim(df)[1] - sum(is.na(agr_cov$WSPD)))*0.1)
-rm_sal <- round((dim(df)[1] - sum(is.na(agr_cov$Salinity)))*0.1)
-rm_sst <- round((dim(df)[1] - sum(is.na(agr_cov$SST)))*0.1)
-rm_tr <- round((dim(df)[1] - sum(is.na(agr_cov$Total_Rain)))*0.1)
-rm_mt <- round((dim(df)[1] - sum(is.na(agr_cov$Mean_Temp)))*0.1)
+rm_wdir <- round((dim(full_dat)[1] - sum(is.na(agr_cov$WDIR)))*0.1)
+rm_wspd <- round((dim(full_dat)[1] - sum(is.na(agr_cov$WSPD)))*0.1)
+rm_sal <- round((dim(full_dat)[1] - sum(is.na(agr_cov$Salinity)))*0.1)
+rm_sst <- round((dim(full_dat)[1] - sum(is.na(agr_cov$SST)))*0.1)
+rm_tr <- round((dim(full_dat)[1] - sum(is.na(agr_cov$Total_Rain)))*0.1)
+rm_mt <- round((dim(full_dat)[1] - sum(is.na(agr_cov$Mean_Temp)))*0.1)
 
-na_ind_wdir <- sample(which(!is.na(df$WDIR)), rm_wdir)
-na_ind_wspd <- sample(which(!is.na(df$WSPD)), rm_wspd)
-na_ind_sal <- sample(which(!is.na(df$Salinity)), rm_sal)
-na_ind_sst <- sample(which(!is.na(df$SST)), rm_sst)
-na_ind_tr <- sample(which(!is.na(df$Total_Rain)), rm_tr)
-na_ind_mt <- sample(which(!is.na(df$Mean_Temp)), rm_mt)
+na_ind_wdir <- sample(which(!is.na(full_dat$WDIR)), rm_wdir)
+na_ind_wspd <- sample(which(!is.na(full_dat$WSPD)), rm_wspd)
+na_ind_sal <- sample(which(!is.na(full_dat$Salinity)), rm_sal)
+na_ind_sst <- sample(which(!is.na(full_dat$SST)), rm_sst)
+na_ind_tr <- sample(which(!is.na(full_dat$Total_Rain)), rm_tr)
+na_ind_mt <- sample(which(!is.na(full_dat$Mean_Temp)), rm_mt)
 
 na_wdir <- replace(agr_cov$WDIR, na_ind_wdir, NA)
 na_wspd <- replace(agr_cov$WSPD, na_ind_wspd, NA)
