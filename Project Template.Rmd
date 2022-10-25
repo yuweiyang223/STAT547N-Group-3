@@ -108,6 +108,8 @@ ggplot_na_imputations(full_dat$SST, noro_mi1$SST, ylab = "SST", title = "", lege
 # Evaluating performance of imputation methods
 
 ```{r}
+set.seed(123)
+
 # randomly sample 10% of available data for each variable
 rm_wdir <- round((dim(df)[1] - sum(is.na(agr_cov$WDIR)))*0.1)
 rm_wspd <- round((dim(df)[1] - sum(is.na(agr_cov$WSPD)))*0.1)
