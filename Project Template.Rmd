@@ -4,44 +4,66 @@ title: Studying the relationship between environmental conditions and norovirus 
 output: html_document
 ---
 
-```{r}
+# Pre-processing and checking multicollinearity
+```{r }
 # load library
 library(tidyverse) 
 library(mice) 
 library(VIM) 
 library(Amelia) 
 library(car) 
+library(ggplot2)
+library(corrplot)
 
 # load data
-cov_data <- read.csv("Covariates data.csv")
-noro_count <- read.csv("Norovirus_data.csv")
-glimpse(cov_data)
+cov_dat <- read.csv("Covariates data.csv")
+nv_dat <- read.csv("Norovirus_data.csv")
+glimpse(cov_dat)
 
 # clean noro_count data
-colnames(noro_count) <- c("year", "epiweek", "outbreak_count")
+colnames(nv_dat) <- c("year", "epiweek", "outbreak_count")
 
 # join tables
-df <- cov_data %>%
-  left_join(noro_count, by= c("year", "epiweek"))
+full_dat <- cov_dat %>%
+  left_join(nv_dat, by= c("year", "epiweek"))
 
-# vif
-model_vif <- lm(outbreak_count ~ WDIR + WSPD + GSPD + Salinity + SST + Total_Rain + Max_Temp + Min_Temp + Mean_Temp + Total_Precip, data = df)
+# multicollinearity
+cov <- full_dat[,c("WDIR", "WSPD", "GSPD", "Salinity", "SST", "Total_Rain", "Mean_Temp", "Max_Temp", "Min_Temp", "Mean_Temp", "Total_Precip")]
+
+## correlation plot
+corrplot(cor(cov, use = "complete.obs"), method="circle")
+
+## vif
+model_vif <- lm(outbreak_count ~ WDIR + WSPD + GSPD + Salinity + SST + Total_Rain + Max_Temp + Min_Temp + Mean_Temp + Total_Precip, data = full_dat)
 vif_values <- vif(model_vif)
 vif_values
 
-#create horizontal bar chart to display each VIF value
-barplot(vif_values, main = "VIF Values", horiz = TRUE, col = "steelblue")
+## create horizontal bar chart to display each VIF value
+{par(mar=c(5,6,4,1)+.1)
+  barplot(vif_values, main = "VIF Values", horiz = TRUE, col = "steelblue", xlim = c(0, 10), las=1, cex.axis = 1.3)
+#add vertical line at 5
+abline(v = 5, lwd = 3, lty = 2, col = "red")
+}
+
+### delete GSPD and use WSPD
+### delete max/min temp and use mean temp
+### delete total snow, total_precip and use total rain
+### use SST
 
 
-# compared with correlation plot
-## delete GSPD and use WSPD
-## SST and mean temp instead of max, min, max temp
-## Total rain instead of total snow
+```
+
+# mice imputations
+```{r}
+# check missing data type
+agr_cov <- full_dat[,c("Date", "WDIR", "WSPD", "Salinity", "SST", "Total_Rain", "Mean_Temp")]
+aggrP <- aggr(agr_cov, numbers=TRUE, sortVars=TRUE,cex.axis = 0.8)
 
 
 # impute using mice
 set.seed(123)
-noro_mi <- mice(df[,c("WDIR", "GSPD", "Salinity", "SST", "Total_Rain", "Mean_Temp", "outbreak_count")], m=5, seed=123)
+
+noro_mi <- mice(agr_cov, m=5, seed=123)
 
 
 # imputed data
@@ -52,12 +74,12 @@ noro_mi4 <- complete(noro_mi, 4)
 noro_mi5 <- complete(noro_mi, 5)
 
 # bind into complete dataframe
-no_mi_cov <- df[,c("X", "...1", "Date", "Max_Temp", "Min_Temp", "Total_Precip", "year", "epiweek")]
-noro_mi1_df <- cbind(noro_mi1, no_mi_cov)
-noro_mi2_df <- cbind(noro_mi2, no_mi_cov)
-noro_mi3_df <- cbind(noro_mi3, no_mi_cov)
-noro_mi4_df <- cbind(noro_mi4, no_mi_cov)
-noro_mi5_df <- cbind(noro_mi5, no_mi_cov)
+no_mi_cov <- full_dat[,c("year", "epiweek")]
+noro_mi1 <- cbind(noro_mi1, no_mi_cov)
+noro_mi2 <- cbind(noro_mi2, no_mi_cov)
+noro_mi3 <- cbind(noro_mi3, no_mi_cov)
+noro_mi4 <- cbind(noro_mi4, no_mi_cov)
+noro_mi5 <- cbind(noro_mi5, no_mi_cov)
 
 
 
@@ -68,31 +90,174 @@ write.csv(noro_mi3, "data_mi3.csv")
 write.csv(noro_mi4, "data_mi4.csv")
 write.csv(noro_mi5, "data_mi5.csv")
 
-write.csv(noro_mi1_df, "noro_mi1_df.csv")
-write.csv(noro_mi2_df, "noro_mi2_df.csv")
-write.csv(noro_mi3_df, "noro_mi3_df.csv")
-write.csv(noro_mi4_df, "noro_mi4_df.csv")
-write.csv(noro_mi5_df, "noro_mi5_df.csv")
-```
 
-
-# Data Processing
-```{r}
 
 ```
 
 
-# Missing Value Imputation
-## Time series
 
 ```{r}
+# plots
+library("imputeTS")
+
+ggplot_na_imputations(full_dat$Mean_Temp, noro_mi1$Mean_Temp, ylab = "Mean Temperature", title = "", legend = FALSE)
+ggplot_na_imputations(full_dat$SST, noro_mi1$SST, ylab = "SST", title = "", legend = FALSE)
 
 ```
 
-
-## MICE
+# Evaluating performance of imputation methods
 
 ```{r}
+# randomly sample 10% of available data for each variable
+rm_wdir <- round((dim(df)[1] - sum(is.na(agr_cov$WDIR)))*0.1)
+rm_wspd <- round((dim(df)[1] - sum(is.na(agr_cov$WSPD)))*0.1)
+rm_sal <- round((dim(df)[1] - sum(is.na(agr_cov$Salinity)))*0.1)
+rm_sst <- round((dim(df)[1] - sum(is.na(agr_cov$SST)))*0.1)
+rm_tr <- round((dim(df)[1] - sum(is.na(agr_cov$Total_Rain)))*0.1)
+rm_mt <- round((dim(df)[1] - sum(is.na(agr_cov$Mean_Temp)))*0.1)
+
+na_ind_wdir <- sample(which(!is.na(df$WDIR)), rm_wdir)
+na_ind_wspd <- sample(which(!is.na(df$WSPD)), rm_wspd)
+na_ind_sal <- sample(which(!is.na(df$Salinity)), rm_sal)
+na_ind_sst <- sample(which(!is.na(df$SST)), rm_sst)
+na_ind_tr <- sample(which(!is.na(df$Total_Rain)), rm_tr)
+na_ind_mt <- sample(which(!is.na(df$Mean_Temp)), rm_mt)
+
+na_wdir <- replace(agr_cov$WDIR, na_ind_wdir, NA)
+na_wspd <- replace(agr_cov$WSPD, na_ind_wspd, NA)
+na_sal <- replace(agr_cov$Salinity, na_ind_sal, NA)
+na_sst <- replace(agr_cov$SST, na_ind_sst, NA)
+na_tr <- replace(agr_cov$Total_Rain, na_ind_tr, NA)
+na_mt <- replace(agr_cov$Mean_Temp, na_ind_mt, NA)
+
+na_df <- cbind(na_wdir, na_wspd, na_sal, na_sst, na_tr, na_mt)
+
+
+
+# mice imputation for each variable with 10% NA 
+na_noro_mi <- mice(na_df, m=5, seed=123)
+
+# imputed data
+na_noro_mi1 <- complete(na_noro_mi, 1)
+na_noro_mi2 <- complete(na_noro_mi, 2)
+na_noro_mi3 <- complete(na_noro_mi, 3)
+na_noro_mi4 <- complete(na_noro_mi, 4)
+na_noro_mi5 <- complete(na_noro_mi, 5)
+
+# imputed data only where 10% NA filled
+na_wdir_mi1 <- na_noro_mi1$na_wdir[c(na_ind_wdir)]
+na_wdir_mi2 <- na_noro_mi2$na_wdir[c(na_ind_wdir)]
+na_wdir_mi3 <- na_noro_mi3$na_wdir[c(na_ind_wdir)]
+na_wdir_mi4 <- na_noro_mi4$na_wdir[c(na_ind_wdir)]
+na_wdir_mi5 <- na_noro_mi5$na_wdir[c(na_ind_wdir)]
+
+na_wspd_mi1 <- na_noro_mi1$na_wspd[c(na_ind_wspd)]
+na_wspd_mi2 <- na_noro_mi2$na_wspd[c(na_ind_wspd)]
+na_wspd_mi3 <- na_noro_mi3$na_wspd[c(na_ind_wspd)]
+na_wspd_mi4 <- na_noro_mi4$na_wspd[c(na_ind_wspd)]
+na_wspd_mi5 <- na_noro_mi5$na_wspd[c(na_ind_wspd)]
+
+na_sal_mi1 <- na_noro_mi1$na_sal[c(na_ind_sal)]
+na_sal_mi2 <- na_noro_mi2$na_sal[c(na_ind_sal)]
+na_sal_mi3 <- na_noro_mi3$na_sal[c(na_ind_sal)]
+na_sal_mi4 <- na_noro_mi4$na_sal[c(na_ind_sal)]
+na_sal_mi5 <- na_noro_mi5$na_sal[c(na_ind_sal)]
+
+na_sst_mi1 <- na_noro_mi1$na_sst[c(na_ind_sst)]
+na_sst_mi2 <- na_noro_mi2$na_sst[c(na_ind_sst)]
+na_sst_mi3 <- na_noro_mi3$na_sst[c(na_ind_sst)]
+na_sst_mi4 <- na_noro_mi4$na_sst[c(na_ind_sst)]
+na_sst_mi5 <- na_noro_mi5$na_sst[c(na_ind_sst)]
+
+na_tr_mi1 <- na_noro_mi1$na_tr[c(na_ind_tr)]
+na_tr_mi2 <- na_noro_mi2$na_tr[c(na_ind_tr)]
+na_tr_mi3 <- na_noro_mi3$na_tr[c(na_ind_tr)]
+na_tr_mi4 <- na_noro_mi4$na_tr[c(na_ind_tr)]
+na_tr_mi5 <- na_noro_mi5$na_tr[c(na_ind_tr)]
+
+na_mt_mi1 <- na_noro_mi1$na_mt[c(na_ind_mt)]
+na_mt_mi2 <- na_noro_mi2$na_mt[c(na_ind_mt)]
+na_mt_mi3 <- na_noro_mi3$na_mt[c(na_ind_mt)]
+na_mt_mi4 <- na_noro_mi4$na_mt[c(na_ind_mt)]
+na_mt_mi5 <- na_noro_mi5$na_mt[c(na_ind_mt)]
+
+# rmse for each imputation
+# rmse = sqrt(mean(observed - predicted)^2))
+library(Metrics)
+rmse_wdir_mi1 <- rmse(agr_cov$WDIR[c(na_ind_wdir)], na_wdir_mi1)
+rmse_wdir_mi2 <- rmse(agr_cov$WDIR[c(na_ind_wdir)], na_wdir_mi2)
+rmse_wdir_mi3 <- rmse(agr_cov$WDIR[c(na_ind_wdir)], na_wdir_mi3)
+rmse_wdir_mi4 <- rmse(agr_cov$WDIR[c(na_ind_wdir)], na_wdir_mi4)
+rmse_wdir_mi5 <- rmse(agr_cov$WDIR[c(na_ind_wdir)], na_wdir_mi5)
+
+rmse_wspd_mi1 <- rmse(agr_cov$WSPD[c(na_ind_wspd)], na_wspd_mi1)
+rmse_wspd_mi2 <- rmse(agr_cov$WSPD[c(na_ind_wspd)], na_wspd_mi2)
+rmse_wspd_mi3 <- rmse(agr_cov$WSPD[c(na_ind_wspd)], na_wspd_mi3)
+rmse_wspd_mi4 <- rmse(agr_cov$WSPD[c(na_ind_wspd)], na_wspd_mi4)
+rmse_wspd_mi5 <- rmse(agr_cov$WSPD[c(na_ind_wspd)], na_wspd_mi5)
+
+rmse_sal_mi1 <- rmse(agr_cov$Salinity[c(na_ind_sal)], na_sal_mi1)
+rmse_sal_mi2 <- rmse(agr_cov$Salinity[c(na_ind_sal)], na_sal_mi2)
+rmse_sal_mi3 <- rmse(agr_cov$Salinity[c(na_ind_sal)], na_sal_mi3)
+rmse_sal_mi4 <- rmse(agr_cov$Salinity[c(na_ind_sal)], na_sal_mi4)
+rmse_sal_mi5 <- rmse(agr_cov$Salinity[c(na_ind_sal)], na_sal_mi5)
+
+rmse_sst_mi1 <- rmse(agr_cov$SST[c(na_ind_sst)], na_sst_mi1)
+rmse_sst_mi2 <- rmse(agr_cov$SST[c(na_ind_sst)], na_sst_mi2)
+rmse_sst_mi3 <- rmse(agr_cov$SST[c(na_ind_sst)], na_sst_mi3)
+rmse_sst_mi4 <- rmse(agr_cov$SST[c(na_ind_sst)], na_sst_mi4)
+rmse_sst_mi5 <- rmse(agr_cov$SST[c(na_ind_sst)], na_sst_mi5)
+
+rmse_tr_mi1 <- rmse(agr_cov$Total_Rain[c(na_ind_tr)], na_tr_mi1)
+rmse_tr_mi2 <- rmse(agr_cov$Total_Rain[c(na_ind_tr)], na_tr_mi2)
+rmse_tr_mi3 <- rmse(agr_cov$Total_Rain[c(na_ind_tr)], na_tr_mi3)
+rmse_tr_mi4 <- rmse(agr_cov$Total_Rain[c(na_ind_tr)], na_tr_mi4)
+rmse_tr_mi5 <- rmse(agr_cov$Total_Rain[c(na_ind_tr)], na_tr_mi5)
+
+rmse_mt_mi1 <- rmse(agr_cov$Mean_Temp[c(na_ind_mt)], na_mt_mi1)
+rmse_mt_mi2 <- rmse(agr_cov$Mean_Temp[c(na_ind_mt)], na_mt_mi2)
+rmse_mt_mi3 <- rmse(agr_cov$Mean_Temp[c(na_ind_mt)], na_mt_mi3)
+rmse_mt_mi4 <- rmse(agr_cov$Mean_Temp[c(na_ind_mt)], na_mt_mi4)
+rmse_mt_mi5 <- rmse(agr_cov$Mean_Temp[c(na_ind_mt)], na_mt_mi5)
+
+
+# bias for each imputation
+## bias = mean(observed - predicted)
+bias_wdir_mi1 <- bias(agr_cov$WDIR[c(na_ind_wdir)], na_wdir_mi1)
+bias_wdir_mi2 <- bias(agr_cov$WDIR[c(na_ind_wdir)], na_wdir_mi2)
+bias_wdir_mi3 <- bias(agr_cov$WDIR[c(na_ind_wdir)], na_wdir_mi3)
+bias_wdir_mi4 <- bias(agr_cov$WDIR[c(na_ind_wdir)], na_wdir_mi4)
+bias_wdir_mi5 <- bias(agr_cov$WDIR[c(na_ind_wdir)], na_wdir_mi5)
+
+bias_wspd_mi1 <- bias(agr_cov$WSPD[c(na_ind_wspd)], na_wspd_mi1)
+bias_wspd_mi2 <- bias(agr_cov$WSPD[c(na_ind_wspd)], na_wspd_mi2)
+bias_wspd_mi3 <- bias(agr_cov$WSPD[c(na_ind_wspd)], na_wspd_mi3)
+bias_wspd_mi4 <- bias(agr_cov$WSPD[c(na_ind_wspd)], na_wspd_mi4)
+bias_wspd_mi5 <- bias(agr_cov$WSPD[c(na_ind_wspd)], na_wspd_mi5)
+
+bias_sal_mi1 <- bias(agr_cov$SAL[c(na_ind_sal)], na_sal_mi1)
+bias_sal_mi2 <- bias(agr_cov$SAL[c(na_ind_sal)], na_sal_mi2)
+bias_sal_mi3 <- bias(agr_cov$SAL[c(na_ind_sal)], na_sal_mi3)
+bias_sal_mi4 <- bias(agr_cov$SAL[c(na_ind_sal)], na_sal_mi4)
+bias_sal_mi5 <- bias(agr_cov$SAL[c(na_ind_sal)], na_sal_mi5)
+
+bias_sst_mi1 <- bias(agr_cov$SST[c(na_ind_sst)], na_sst_mi1)
+bias_sst_mi2 <- bias(agr_cov$SST[c(na_ind_sst)], na_sst_mi2)
+bias_sst_mi3 <- bias(agr_cov$SST[c(na_ind_sst)], na_sst_mi3)
+bias_sst_mi4 <- bias(agr_cov$SST[c(na_ind_sst)], na_sst_mi4)
+bias_sst_mi5 <- bias(agr_cov$SST[c(na_ind_sst)], na_sst_mi5)
+
+bias_tr_mi1 <- bias(agr_cov$Total_Rain[c(na_ind_tr)], na_tr_mi1)
+bias_tr_mi2 <- bias(agr_cov$Total_Rain[c(na_ind_tr)], na_tr_mi2)
+bias_tr_mi3 <- bias(agr_cov$Total_Rain[c(na_ind_tr)], na_tr_mi3)
+bias_tr_mi4 <- bias(agr_cov$Total_Rain[c(na_ind_tr)], na_tr_mi4)
+bias_tr_mi5 <- bias(agr_cov$Total_Rain[c(na_ind_tr)], na_tr_mi5)
+
+bias_mt_mi1 <- bias(agr_cov$Mean_Temp[c(na_ind_mt)], na_mt_mi1)
+bias_mt_mi2 <- bias(agr_cov$Mean_Temp[c(na_ind_mt)], na_mt_mi2)
+bias_mt_mi3 <- bias(agr_cov$Mean_Temp[c(na_ind_mt)], na_mt_mi3)
+bias_mt_mi4 <- bias(agr_cov$Mean_Temp[c(na_ind_mt)], na_mt_mi4)
+bias_mt_mi5 <- bias(agr_cov$Mean_Temp[c(na_ind_mt)], na_mt_mi5)
 
 ```
 
@@ -100,52 +265,5 @@ write.csv(noro_mi5_df, "noro_mi5_df.csv")
 
 
 
-# Data Transformation
 
-```{r}
-
-```
-
-
-
-
-
-# Multi-collinearity
-## Variance Inflation Factor
-
-```{r}
-
-```
-
-
-
-
-
-
-# Model Fitting 
-- TBD on final models; quasi-Poisson, Poisson, Negative Binomial
-
-```{r}
-
-```
-
-
-
-
-# Cross Validation
-
-```{r}
-
-```
-
-
-
-
-
-# Results
-
-
-
-
-# Discussion/Recommendations
 
