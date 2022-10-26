@@ -130,9 +130,9 @@ na_sal <- replace(agr_cov$Salinity, na_ind_sal, NA)
 na_sst <- replace(agr_cov$SST, na_ind_sst, NA)
 na_tr <- replace(agr_cov$Total_Rain, na_ind_tr, NA)
 na_mt <- replace(agr_cov$Mean_Temp, na_ind_mt, NA)
+Date<- agr_cov$Date
 
 na_df <- cbind(na_wdir, na_wspd, na_sal, na_sst, na_tr, na_mt)
-
 
 
 # mice imputation for each variable with 10% NA 
@@ -261,10 +261,192 @@ bias_mt_mi4 <- bias(agr_cov$Mean_Temp[c(na_ind_mt)], na_mt_mi4)
 bias_mt_mi5 <- bias(agr_cov$Mean_Temp[c(na_ind_mt)], na_mt_mi5)
 
 ```
+## Amelia 
+```{r}
+set.seed(123)
+# mice imputation for each variable with 10% NA 
+
+data_impute <- data.frame(na_wdir, na_wspd, na_sal, na_sst, na_tr, na_mt, Date)
 
 
+a.out<-amelia(data_impute,ts=" Date")
 
 
+# imputed data
 
+imp1<-a.out$imputations[[1]]
+imp2<-a.out$imputations[[2]]
+imp3<-a.out$imputations[[3]]
+imp4<-a.out$imputations[[4]]
+imp5<-a.out$imputations[[5]]
+
+
+# imputed data only where 10% NA filled
+na_wdir_mi1 <- imp1$na_wdir[c(na_ind_wdir)]
+na_wdir_mi2 <- imp2$na_wdir[c(na_ind_wdir)]
+na_wdir_mi3 <- imp3$na_wdir[c(na_ind_wdir)]
+na_wdir_mi4 <- imp4$na_wdir[c(na_ind_wdir)]
+na_wdir_mi5 <- imp5$na_wdir[c(na_ind_wdir)]
+
+na_wspd_mi1 <- imp1$na_wspd[c(na_ind_wspd)]
+na_wspd_mi2 <- imp2$na_wspd[c(na_ind_wspd)]
+na_wspd_mi3 <- imp3$na_wspd[c(na_ind_wspd)]
+na_wspd_mi4 <- imp4$na_wspd[c(na_ind_wspd)]
+na_wspd_mi5 <- imp5$na_wspd[c(na_ind_wspd)]
+
+na_sal_mi1 <- imp1$na_sal[c(na_ind_sal)]
+na_sal_mi2 <- imp2$na_sal[c(na_ind_sal)]
+na_sal_mi3 <- imp3$na_sal[c(na_ind_sal)]
+na_sal_mi4 <- imp4$na_sal[c(na_ind_sal)]
+na_sal_mi5 <- imp5$na_sal[c(na_ind_sal)]
+
+na_sst_mi1 <- imp1$na_sst[c(na_ind_sst)]
+na_sst_mi2 <- imp2$na_sst[c(na_ind_sst)]
+na_sst_mi3 <- imp3$na_sst[c(na_ind_sst)]
+na_sst_mi4 <- imp4$na_sst[c(na_ind_sst)]
+na_sst_mi5 <- imp5$na_sst[c(na_ind_sst)]
+
+na_tr_mi1 <- imp1$na_tr[c(na_ind_tr)]
+na_tr_mi2 <- imp2$na_tr[c(na_ind_tr)]
+na_tr_mi3 <- imp3$na_tr[c(na_ind_tr)]
+na_tr_mi4 <- imp4$na_tr[c(na_ind_tr)]
+na_tr_mi5 <- imp5$na_tr[c(na_ind_tr)]
+
+na_mt_mi1 <- imp1$na_mt[c(na_ind_mt)]
+na_mt_mi2 <- imp2$na_mt[c(na_ind_mt)]
+na_mt_mi3 <- imp3$na_mt[c(na_ind_mt)]
+na_mt_mi4 <- imp4$na_mt[c(na_ind_mt)]
+na_mt_mi5 <- imp5$na_mt[c(na_ind_mt)]
+```
+
+```{r}
+# rmse for each imputation
+# rmse = sqrt(mean(observed - predicted)^2))
+library(Metrics)
+rmse_wdir_am1 <- rmse(agr_cov$WDIR[c(na_ind_wdir)], na_wdir_mi1)
+rmse_wdir_am2 <- rmse(agr_cov$WDIR[c(na_ind_wdir)], na_wdir_mi2)
+rmse_wdir_am3 <- rmse(agr_cov$WDIR[c(na_ind_wdir)], na_wdir_mi3)
+rmse_wdir_am4 <- rmse(agr_cov$WDIR[c(na_ind_wdir)], na_wdir_mi4)
+rmse_wdir_am5 <- rmse(agr_cov$WDIR[c(na_ind_wdir)], na_wdir_mi5)
+
+rmse_wspd_am1 <- rmse(agr_cov$WSPD[c(na_ind_wspd)], na_wspd_mi1)
+rmse_wspd_am2 <- rmse(agr_cov$WSPD[c(na_ind_wspd)], na_wspd_mi2)
+rmse_wspd_am3 <- rmse(agr_cov$WSPD[c(na_ind_wspd)], na_wspd_mi3)
+rmse_wspd_am4 <- rmse(agr_cov$WSPD[c(na_ind_wspd)], na_wspd_mi4)
+rmse_wspd_am5 <- rmse(agr_cov$WSPD[c(na_ind_wspd)], na_wspd_mi5)
+
+rmse_sal_am1 <- rmse(agr_cov$Salinity[c(na_ind_sal)], na_sal_mi1)
+rmse_sal_am2 <- rmse(agr_cov$Salinity[c(na_ind_sal)], na_sal_mi2)
+rmse_sal_am3 <- rmse(agr_cov$Salinity[c(na_ind_sal)], na_sal_mi3)
+rmse_sal_am4 <- rmse(agr_cov$Salinity[c(na_ind_sal)], na_sal_mi4)
+rmse_sal_am5 <- rmse(agr_cov$Salinity[c(na_ind_sal)], na_sal_mi5)
+
+rmse_sst_am1 <- rmse(agr_cov$SST[c(na_ind_sst)], na_sst_mi1)
+rmse_sst_am2 <- rmse(agr_cov$SST[c(na_ind_sst)], na_sst_mi2)
+rmse_sst_am3 <- rmse(agr_cov$SST[c(na_ind_sst)], na_sst_mi3)
+rmse_sst_am4 <- rmse(agr_cov$SST[c(na_ind_sst)], na_sst_mi4)
+rmse_sst_am5 <- rmse(agr_cov$SST[c(na_ind_sst)], na_sst_mi5)
+
+rmse_tr_am1 <- rmse(agr_cov$Total_Rain[c(na_ind_tr)], na_tr_mi1)
+rmse_tr_am2 <- rmse(agr_cov$Total_Rain[c(na_ind_tr)], na_tr_mi2)
+rmse_tr_am3 <- rmse(agr_cov$Total_Rain[c(na_ind_tr)], na_tr_mi3)
+rmse_tr_am4 <- rmse(agr_cov$Total_Rain[c(na_ind_tr)], na_tr_mi4)
+rmse_tr_am5 <- rmse(agr_cov$Total_Rain[c(na_ind_tr)], na_tr_mi5)
+
+rmse_mt_am1 <- rmse(agr_cov$Mean_Temp[c(na_ind_mt)], na_mt_mi1)
+rmse_mt_am2 <- rmse(agr_cov$Mean_Temp[c(na_ind_mt)], na_mt_mi2)
+rmse_mt_am3 <- rmse(agr_cov$Mean_Temp[c(na_ind_mt)], na_mt_mi3)
+rmse_mt_am4 <- rmse(agr_cov$Mean_Temp[c(na_ind_mt)], na_mt_mi4)
+rmse_mt_am5 <- rmse(agr_cov$Mean_Temp[c(na_ind_mt)], na_mt_mi5)
+
+
+# bias for each imputation
+## bias = mean(observed - predicted)
+bias_wdir_am1 <- bias(agr_cov$WDIR[c(na_ind_wdir)], na_wdir_mi1)
+bias_wdir_am2 <- bias(agr_cov$WDIR[c(na_ind_wdir)], na_wdir_mi2)
+bias_wdir_am3 <- bias(agr_cov$WDIR[c(na_ind_wdir)], na_wdir_mi3)
+bias_wdir_am4 <- bias(agr_cov$WDIR[c(na_ind_wdir)], na_wdir_mi4)
+bias_wdir_am5 <- bias(agr_cov$WDIR[c(na_ind_wdir)], na_wdir_mi5)
+
+bias_wspd_am1 <- bias(agr_cov$WSPD[c(na_ind_wspd)], na_wspd_mi1)
+bias_wspd_am2 <- bias(agr_cov$WSPD[c(na_ind_wspd)], na_wspd_mi2)
+bias_wspd_am3 <- bias(agr_cov$WSPD[c(na_ind_wspd)], na_wspd_mi3)
+bias_wspd_am4 <- bias(agr_cov$WSPD[c(na_ind_wspd)], na_wspd_mi4)
+bias_wspd_am5 <- bias(agr_cov$WSPD[c(na_ind_wspd)], na_wspd_mi5)
+
+bias_sal_am1 <- bias(agr_cov$SAL[c(na_ind_sal)], na_sal_mi1)
+bias_sal_am2 <- bias(agr_cov$SAL[c(na_ind_sal)], na_sal_mi2)
+bias_sal_am3 <- bias(agr_cov$SAL[c(na_ind_sal)], na_sal_mi3)
+bias_sal_am4 <- bias(agr_cov$SAL[c(na_ind_sal)], na_sal_mi4)
+bias_sal_am5 <- bias(agr_cov$SAL[c(na_ind_sal)], na_sal_mi5)
+
+bias_sst_am1 <- bias(agr_cov$SST[c(na_ind_sst)], na_sst_mi1)
+bias_sst_am2 <- bias(agr_cov$SST[c(na_ind_sst)], na_sst_mi2)
+bias_sst_am3 <- bias(agr_cov$SST[c(na_ind_sst)], na_sst_mi3)
+bias_sst_am4 <- bias(agr_cov$SST[c(na_ind_sst)], na_sst_mi4)
+bias_sst_am5 <- bias(agr_cov$SST[c(na_ind_sst)], na_sst_mi5)
+
+bias_tr_am1 <- bias(agr_cov$Total_Rain[c(na_ind_tr)], na_tr_mi1)
+bias_tr_am2 <- bias(agr_cov$Total_Rain[c(na_ind_tr)], na_tr_mi2)
+bias_tr_am3 <- bias(agr_cov$Total_Rain[c(na_ind_tr)], na_tr_mi3)
+bias_tr_am4 <- bias(agr_cov$Total_Rain[c(na_ind_tr)], na_tr_mi4)
+bias_tr_am5 <- bias(agr_cov$Total_Rain[c(na_ind_tr)], na_tr_mi5)
+
+bias_mt_am1 <- bias(agr_cov$Mean_Temp[c(na_ind_mt)], na_mt_mi1)
+bias_mt_am2 <- bias(agr_cov$Mean_Temp[c(na_ind_mt)], na_mt_mi2)
+bias_mt_am3 <- bias(agr_cov$Mean_Temp[c(na_ind_mt)], na_mt_mi3)
+bias_mt_am4 <- bias(agr_cov$Mean_Temp[c(na_ind_mt)], na_mt_mi4)
+bias_mt_am5 <- bias(agr_cov$Mean_Temp[c(na_ind_mt)], na_mt_mi5)
+
+```
+
+
+## TS imputation
+```{r}
+WDIR<- na_kalman(data_impute$na_wdir)
+WSPD<- na_kalman(data_impute$na_wspd)
+Salinity<- na_kalman(data_impute$na_sal)
+SST<- na_kalman(data_impute$na_sst)
+Mean_Temp<- na_kalman(data_impute$na_mt)
+Total_Rain<- na_kalman(data_impute$na_tr)
+
+# imputed data only where 10% NA filled
+na_wdir_ts <- na_noro_mi1$na_wdir[c(na_ind_wdir)]
+
+na_wspd_ts <- na_noro_mi1$na_wspd[c(na_ind_wspd)]
+
+na_sal_ts <- na_noro_mi1$na_sal[c(na_ind_sal)]
+
+na_sst_ts <- na_noro_mi1$na_sst[c(na_ind_sst)]
+
+na_tr_ts <- na_noro_mi1$na_tr[c(na_ind_tr)]
+
+na_mt_ts <- na_noro_mi1$na_mt[c(na_ind_mt)]
+
+rmse_wdir_ts <- rmse(agr_cov$WDIR[c(na_ind_wdir)], na_wdir_ts)
+rmse_wspd_ts <- rmse(agr_cov$WSPD[c(na_ind_wspd)], na_wspd_ts)
+rmse_sal_ts <- rmse(agr_cov$Salinity[c(na_ind_sal)], na_sal_ts)
+rmse_sst_ts <- rmse(agr_cov$SST[c(na_ind_sst)], na_sst_ts)
+rmse_tr_ts <- rmse(agr_cov$Total_Rain[c(na_ind_tr)], na_tr_ts)
+rmse_mt_ts <- rmse(agr_cov$Mean_Temp[c(na_ind_mt)], na_mt_ts)
+
+
+bias_wdir_ts <- bias(agr_cov$WDIR[c(na_ind_wdir)], na_wdir_ts)
+bias_wspd_ts <- bias(agr_cov$WSPD[c(na_ind_wspd)], na_wspd_ts)
+
+
+bias_sal_ts <- bias(agr_cov$SAL[c(na_ind_sal)], na_sal_ts)
+
+
+bias_sst_ts <- bias(agr_cov$SST[c(na_ind_sst)], na_sst_ts)
+
+
+bias_tr_ts <- bias(agr_cov$Total_Rain[c(na_ind_tr)], na_tr_ts)
+
+
+bias_mt_ts <- bias(agr_cov$Mean_Temp[c(na_ind_mt)], na_mt_ts)
+
+
+```
 
 
