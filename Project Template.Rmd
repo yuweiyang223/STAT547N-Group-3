@@ -517,17 +517,24 @@ bias_mi
 bias_am
 bias_ts
 
-df
+bias<- data.frame(x,bias_mi,bias_am,bias_ts)
 ```
 
 ```{r}
 ggplot(data=rmse, aes(x)) + 
   geom_line(aes(y = rmse_mi), color = "darkred") + 
   geom_line(aes(y = rmse_ts), color="steelblue") +
-  geom_line(aes(y=rmse_am),color = "red")
+  geom_line(aes(y=rmse_am),color = "red") 
+
 ```
 
 
+```{r}
+ggplot(data=bias, aes(x)) + 
+  geom_line(aes(y = bias_mi), color = "darkred") + 
+  geom_line(aes(y = bias_ts), color="steelblue") +
+  geom_line(aes(y=bias_am),color = "red")
+```
 
 
 
